@@ -6,14 +6,9 @@
 #include <sys/wait.h>
 
 #define RESET_COLOR "\x1b[0m"
-#define TASK1_COLOR "\x1b[34;47m" 
-#define TASK2_COLOR "\x1b[32;43m" 
-#define TASK3_COLOR "\x1b[35;46m" 
 #define RED_TEXT "\x1b[31m"
-
-void printError(const char* message) {
-    printf("%s%s%s", RED_TEXT, message, RESET_COLOR);
-}
+#define GREEN_TEXT "\x1b[32m"
+#define BLUE_TEXT "\x1b[34m"
 
 bool task1Running = false;
 bool task2Running = false;
@@ -24,6 +19,10 @@ char task3Parameter[256] = "";
 int task1PauseMs = 0;
 int task2PauseMs = 0;
 int task3PauseMs = 0;
+
+void printError(const char* message) {
+    printf("%s%s%s", RED_TEXT, message, RESET_COLOR);
+}
 
 void writeToFile(const char* filename, const char* data) {
     FILE *file = fopen(filename, "a");
@@ -44,15 +43,7 @@ void displayFile(const char* filename) {
 
     char line[1024];
     while (fgets(line, sizeof(line), file) != NULL) {
-        if (strstr(line, "Task 1")) {
-            printf("%s%s%s", TASK1_COLOR, line, RESET_COLOR);
-        } else if (strstr(line, "Task 2")) {
-            printf("%s%s%s", TASK2_COLOR, line, RESET_COLOR);
-        } else if (strstr(line, "Task 3")) {
-            printf("%s%s%s", TASK3_COLOR, line, RESET_COLOR);
-        } else {
-            printf("%s", line);
-        }
+        printf("%s", line); 
     }
 
     fclose(file);
@@ -60,26 +51,43 @@ void displayFile(const char* filename) {
 
 void runTask(int taskNumber, bool start, int fd) {
     char data[1024];
+    const char* colorCode;
+
     if (start) {
         int pauseMs;
+        char colorChoice[10];
+        
+        printf("Enter a color for Task %d (red/green/blue): ", taskNumber);
+        scanf("%s", colorChoice);
+        while (getchar() != '\n'); 
+
+        if (strcmp(colorChoice, "red") == 0) {
+            colorCode = RED_TEXT;
+        } else if (strcmp(colorChoice, "green") == 0) {
+            colorCode = GREEN_TEXT;
+        } else if (strcmp(colorChoice, "blue") == 0) {
+            colorCode = BLUE_TEXT;
+        } else {
+            printError("Invalid color choice. Defaulting to red.\n");
+            colorCode = RED_TEXT;
+        }
+        
         printf("Enter pause duration in milliseconds for Task %d: ", taskNumber);
         scanf("%d", &pauseMs);
         while (getchar() != '\n'); 
+        usleep(pauseMs * 1000); 
         
         switch (taskNumber) {
             case 1:
-                printf("Starting Task 1...\n");
-                snprintf(data, sizeof(data), "Task 1 started with int parameter: %d, pause duration: %d ms", task1Parameter, pauseMs);
+                snprintf(data, sizeof(data), "%sTask 1 started with int parameter: %d, pause duration: %d ms%s", colorCode, task1Parameter, pauseMs, RESET_COLOR);
                 task1PauseMs = pauseMs;
                 break;
             case 2:
-                printf("Starting Task 2...\n");
-                snprintf(data, sizeof(data), "Task 2 started with float parameter: %f, pause duration: %d ms", task2Parameter, pauseMs);
+                snprintf(data, sizeof(data), "%sTask 2 started with float parameter: %.6f, pause duration: %d ms%s", colorCode, task2Parameter, pauseMs, RESET_COLOR);
                 task2PauseMs = pauseMs;
                 break;
             case 3:
-                printf("Starting Task 3...\n");
-                snprintf(data, sizeof(data), "Task 3 started with string parameter: %s, pause duration: %d ms", task3Parameter, pauseMs);
+                snprintf(data, sizeof(data), "%sTask 3 started with string parameter: %s, pause duration: %d ms%s", colorCode, task3Parameter, pauseMs, RESET_COLOR);
                 task3PauseMs = pauseMs;
                 break;
             default:
@@ -90,16 +98,13 @@ void runTask(int taskNumber, bool start, int fd) {
     } else {
         switch (taskNumber) {
             case 1:
-                printf("Stopping Task 1...\n");
-                snprintf(data, sizeof(data), "Task 1 stopped");
+                snprintf(data, sizeof(data), "%sStopping Task 1...%s", colorCode, RESET_COLOR);
                 break;
             case 2:
-                printf("Stopping Task 2...\n");
-                snprintf(data, sizeof(data), "Task 2 stopped");
+                snprintf(data, sizeof(data), "%sStopping Task 2...%s", colorCode, RESET_COLOR);
                 break;
             case 3:
-                printf("Stopping Task 3...\n");
-                snprintf(data, sizeof(data), "Task 3 stopped");
+                snprintf(data, sizeof(data), "%sStopping Task 3...%s", colorCode, RESET_COLOR);
                 break;
             default:
                 printf("Unknown task stopped\n");
@@ -213,4 +218,3 @@ int main() {
     printf("\nExiting...\n");
     return 0;
 }
-
